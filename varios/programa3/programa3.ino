@@ -1,0 +1,71 @@
+#define LED_1 2
+#define LED_2 0
+#define LED_3 4
+#define LED_4 16
+#define LED_5 17
+#define LED_6 5
+#define LED_7 18
+
+void setup() {
+    pinMode(LED_1, OUTPUT);
+    pinMode(LED_2, OUTPUT);
+    pinMode(LED_3, OUTPUT);
+    pinMode(LED_4, OUTPUT);
+    pinMode(LED_5, OUTPUT);
+    pinMode(LED_6, OUTPUT);
+    pinMode(LED_7, OUTPUT);
+    pinMode(LED_8, OUTPUT);
+}
+
+void toggle(int LED_A, int LED_B) {
+    digitalWrite(LED_A, 0);
+    digitalWrite(LED_B, 1);
+}
+
+void loop() {
+    digitalWrite(LED_1, 1);
+    delay(100);  // Espera 1 segundo
+
+    toggle(LED_1, LED_2);
+    delay(100);  // Espera 1 segundo
+
+    toggle(LED_2, LED_3);
+    delay(100);  // Espera 1 segundo
+
+    toggle(LED_3, LED_4);
+    delay(100);  // Espera 1 segundo
+
+    toggle(LED_4, LED_5);
+    delay(100);  // Espera 1 segundo
+
+    toggle(LED_5, LED_6);
+    delay(100);  // Espera 1 segundo
+
+    toggle(LED_6, LED_7);
+    delay(100);  // Espera 1 segundo
+
+    toggle(LED_7, LED_8);
+    delay(100);  // Espera 1 segundo
+
+    digitalWrite(LED_8, 0);
+    delay(100);  // Espera 1 segundo
+
+     toggle(LED_8, LED_7);
+    delay(100);  // Espera 1 segundo
+
+    toggle(LED_7,LED_6);
+    delay(100);  // Espera 1 segundo
+    toggle(LED_6,LED_5);
+    delay(100);  // Espera 1 segundo
+    toggle(LED_5,LED_4);
+    delay(100);  // Espera 1 segundo
+    toggle(LED_4,LED_3);
+    delay(100);  // Espera 1 segundo
+    toggle(LED_3,LED_2);
+    delay(100);  // Espera 1 segundo
+    toggle(LED_2,LED_1);
+    delay(100);  // Espera 1 segundo
+    digitalWrite(LED_1,0);
+
+
+}
