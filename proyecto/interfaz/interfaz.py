@@ -93,6 +93,20 @@ def load_images_from_folder(folder_path, count):
             print(f"Imagen no encontrada: {file}")
     return images
 
+def load_ter_images_from_folder(folder_path, count):
+    images = []
+    for i in range(count):
+        file = os.path.join(folder_path, f"{folder_path.split('/')[-1]}_{i}.png")
+        if os.path.exists(file):
+            try:
+                img = Image.open(file).resize((250, 200))
+                images.append(ImageTk.PhotoImage(img))
+            except Exception as e:
+                print(f"Error cargando la imagen {file}: {e}")
+        else:
+            print(f"Imagen no encontrada: {file}")
+    return images
+
 
 # Función para seleccionar una imagen basada en el valor
 def select_image(value, image_list):
@@ -101,14 +115,14 @@ def select_image(value, image_list):
 
 
 # Cargar imágenes de cada tipo
-termometro_images = load_images_from_folder(
-    "C:/Users/bayoy/Desktop/Sunem/Instru/media/termometro", 2
+termometro_images = load_ter_images_from_folder(
+    "proyecto/interfaz/media/termometro", 2
 )
 vaso_images = load_images_from_folder(
-    "C:/Users/bayoy/Desktop/Sunem/Instru/media/vaso", 8
+    "proyecto/interfaz/media/vaso", 8
 )
 foco_images = load_images_from_folder(
-    "C:/Users/bayoy/Desktop/Sunem/Instru/media/foco", 2
+    "proyecto/interfaz/media/foco", 2
 )
 
 # Crear etiquetas para mostrar imágenes
@@ -140,7 +154,7 @@ meter_light, bar_light, label_light = create_custom_meter(frame_meters, "Luz")
 # Configuración del puerto serial con manejo de errores
 def init_serial():
     try:
-        port = "COM3"  # Cambia 'COM3' al puerto correcto
+        port = "/dev/ttyUSB0"  # Cambia 'COM3' al puerto correcto
         baud_rate = 115200
         print(f"Intentando abrir el puerto serial {port} a {baud_rate}...")
         return serial.Serial(port, baud_rate, timeout=1)
