@@ -116,7 +116,7 @@ def select_image(value, image_list):
 
 # Cargar imágenes de cada tipo
 termometro_images = load_ter_images_from_folder(
-    "proyecto/interfaz/media/termometro", 2
+    "proyecto/interfaz/media/termometro", 10
 )
 vaso_images = load_images_from_folder(
     "proyecto/interfaz/media/vaso", 8
