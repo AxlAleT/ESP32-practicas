@@ -45,12 +45,37 @@ def create_custom_meter(parent, title):
 
     return canvas, bar, value_label
 
+def create_temperature_custom_meter(parent, title):
+    frame = tk.Frame(parent, bg="#2c2f33")
+    frame.pack(side=tk.LEFT, padx=20)
+
+    label = tk.Label(
+        frame, text=title, font=("Arial", 14, "bold"), fg="#ffffff", bg="#2c2f33"
+    )
+    label.pack(pady=5)
+
+    canvas = Canvas(frame, width=100, height=250, bg="#2c2f33", highlightthickness=0)
+    canvas.pack(pady=10)
+
+    # Dibujar el fondo del medidor
+    canvas.create_rectangle(40, 20, 60, 230, fill="#23272a", outline="")
+
+    # Crear barra dinámica
+    bar = canvas.create_rectangle(40, 230, 60, 230, fill="#7289da", outline="")
+
+    value_label = tk.Label(
+        frame, text="0°C", font=("Arial", 12), fg="#ffffff", bg="#2c2f33"
+    )
+    value_label.pack(pady=5)
+
+    return canvas, bar, value_label
+
 
 # Función para actualizar el medidor
-def update_custom_meter(canvas, bar, value_label, value):
-    height = 210 * (value / 100)
+def update_custom_meter(canvas, bar, value_label, value, max_value=100):
+    height = 210 * (value / max_value)
     canvas.coords(bar, 40, 230 - height, 60, 230)
-    value_label.config(text=f"{value}%")
+    value_label.config(text=f"{value}")
 
 
 # Cargar imágenes desde una carpeta
@@ -105,7 +130,7 @@ if foco_images:
     foco_label.config(image=foco_images[0])
 
 # Crear medidores personalizados
-meter_temp, bar_temp, label_temp = create_custom_meter(frame_meters, "Temperatura")
+meter_temp, bar_temp, label_temp = create_temperature_custom_meter(frame_meters, "Temperatura")
 meter_humidity, bar_humidity, label_humidity = create_custom_meter(
     frame_meters, "Humedad"
 )
@@ -141,7 +166,7 @@ def read_serial():
                     temp_value, humidity_value, light_value = map(int, line.split(","))
 
                     # Actualizar medidores
-                    update_custom_meter(meter_temp, bar_temp, label_temp, temp_value)
+                    update_custom_meter(meter_temp, bar_temp, label_temp, temp_value, 66)
                     update_custom_meter(
                         meter_humidity, bar_humidity, label_humidity, humidity_value
                     )
