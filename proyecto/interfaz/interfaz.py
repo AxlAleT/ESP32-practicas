@@ -73,9 +73,31 @@ def create_temperature_custom_meter(parent, title):
 
 # Función para actualizar el medidor
 def update_custom_meter(canvas, bar, value_label, value, max_value=100):
+    if value > max_value:
+        value = max_value
     height = 210 * (value / max_value)
     canvas.coords(bar, 40, 230 - height, 60, 230)
-    value_label.config(text=f"{value}")
+    value_label.config(text=f"{value}%")
+
+def update_light_meter(canvas, bar, value_label, value):
+    max_value = 325
+    if value > max_value:
+        value = max_value
+    height = 210 * (value / max_value)
+    canvas.coords(bar, 40, 230 - height, 60, 230)
+    percent = int((value / max_value) * 100)
+    value_label.config(text=f"{percent}%")
+
+def update_temperature_meter(canvas, bar, value_label, raw_value):
+    # Mapea 63 -> 20°C, 264 -> 66°C
+    if raw_value < 63:
+        raw_value = 63
+    if raw_value > 264:
+        raw_value = 264
+    celsius = 20 + (raw_value - 63) * (46 / (264 - 63))
+    height = 210 * (celsius / 66)
+    canvas.coords(bar, 40, 230 - height, 60, 230)
+    value_label.config(text=f"{int(celsius)}°C")
 
 
 # Cargar imágenes desde una carpeta
@@ -109,20 +131,20 @@ def load_ter_images_from_folder(folder_path, count):
 
 
 # Función para seleccionar una imagen basada en el valor
-def select_image(value, image_list):
-    index = min(value * len(image_list) // 101, len(image_list) - 1)
+def select_image(value, image_list, max_value=100):
+    index = min(value * len(image_list) // (max_value + 1), len(image_list) - 1)
     return image_list[index]
 
 
 # Cargar imágenes de cada tipo
 termometro_images = load_ter_images_from_folder(
-    "proyecto/interfaz/media/termometro", 10
+    "interfaz/media/termometro", 10
 )
 vaso_images = load_images_from_folder(
-    "proyecto/interfaz/media/vaso", 8
+    "interfaz/media/vaso", 8
 )
-foco_images = load_images_from_folder(
-    "proyecto/interfaz/media/foco", 2
+foco_images = load_ter_images_from_folder(
+    "interfaz/media/foco", 8
 )
 
 # Crear etiquetas para mostrar imágenes
@@ -180,21 +202,22 @@ def read_serial():
                     temp_value, humidity_value, light_value = map(int, line.split(","))
 
                     # Actualizar medidores
-                    update_custom_meter(meter_temp, bar_temp, label_temp, temp_value, 66)
+                    update_temperature_meter(meter_temp, bar_temp, label_temp, temp_value)
                     update_custom_meter(
                         meter_humidity, bar_humidity, label_humidity, humidity_value
                     )
-                    update_custom_meter(meter_light, bar_light, label_light, light_value)
+                    update_light_meter(meter_light, bar_light, label_light, light_value)
 
                     # Actualizar imágenes basadas en los valores
-                    if termometro_images:  # Asegurarse de que haya imágenes cargadas
-                        termometro_label.config(
-                            image=select_image(temp_value, termometro_images)
-                        )
-                    if vaso_images:
-                        vaso_label.config(image=select_image(humidity_value, vaso_images))
-                    if foco_images:
-                        foco_label.config(image=select_image(light_value, foco_images))
+                    if termometro_images:  # 10 images, 0–66 range
+                        termometro_label.config(image=select_image(temp_value, termometro_images, 66))
+                        print(f"Termometro image level: {temp_value}")
+                    if vaso_images:        # 8 images, 0–100 range
+                        vaso_label.config(image=select_image(humidity_value, vaso_images, 100))
+                        print(f"Vaso image level: {humidity_value}")
+                    if foco_images:        # 8 images, 0–100 range
+                        foco_label.config(image=select_image(light_value, foco_images, 100))
+                        print(f"Foco image level: {light_value}")
                 except ValueError as e:
                     print(f"Error al parsear los datos: {e}")
             else:
