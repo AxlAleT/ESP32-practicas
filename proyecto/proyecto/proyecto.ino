@@ -27,6 +27,7 @@ const int IN2 = 13;                 // Pin de salida digital B
 
 const int LUZ_OUT = 33;  // New pin for luminosity output
 
+
 // Variables globales
 
 
@@ -155,5 +156,4 @@ void loop() {
   controlMotor(temperatura);
   controlLedLuminosidad(luminosidad);
 
-  delay(500);
 }
