@@ -7,9 +7,7 @@
 #define ADC_MAX 1023.0
 #endif
 
-
 //Pines
-
 
 // Pines de los sensores
 #define DHTPIN 4
@@ -18,7 +16,6 @@
 #define LUZPIN 35
 
 // Pines para el control del TRIAC
-const int acoplador = 32;  
 const int disparoTRIAC = 16;
 
 // Pines para el control del motor
@@ -29,14 +26,9 @@ const int LUZ_OUT = 33;  // New pin for luminosity output
 
 // Variables globales
 
-
-// Variables del control del TRIAC
-const int umbralCero = 10;           // Umbral para detección de cruce por cero
-bool cruzoPorCero = false;           // Flag para detectar cruce por cero
-
 // Variables del control del motor mediante temperatura
-const int temperaturaLimiteInferior = 18;       // Límite inferior del rango medio
-const int temperaturaLimiteSuperior = 25;       // Límite superior del rango medio
+const int temperaturaLimiteInferior = 20;       // Límite inferior del rango medio
+const int temperaturaLimiteSuperior = 23;       // Límite superior del rango medio
 
 // Variables del control del LED de luminosidad
 const int umbralLuminosidad = 80;  // Umbral para encender el LED de luminosidad
@@ -44,7 +36,6 @@ const int umbralLuminosidad = 80;  // Umbral para encender el LED de luminosidad
 // Variables del control de la lampara AC mediante humedad
 const int humedadLimiteInferior = 60;       // Límite inferior del rango medio
 const int humedadLimiteSuperior = 80;       // Límite superior del rango medio
-
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -58,7 +49,6 @@ void setup() {
   pinMode(LUZPIN, INPUT);
 
   // Inicialización del control del TRIAC
-  pinMode(acoplador, INPUT);
   pinMode(disparoTRIAC, OUTPUT);
 
   // Inicialización del control del motor
@@ -100,28 +90,20 @@ void enviarDatos(float temperatura, float humedad, int luminosidad) {
   }
 }
 
-
-void detectarCrucePorCero(int valorAnalogico) {
-  if (!cruzoPorCero && valorAnalogico <= umbralCero) {
-    cruzoPorCero = true;
-  }
-}
-
-void dispararPulso(float humedad) {
-  if (cruzoPorCero && (humedad >= humedadLimiteInferior && humedad <= humedadLimiteSuperior)) {
-    digitalWrite(disparoTRIAC, HIGH);  // Enviar pulso
-    delay(1);                              // Duración del pulso (1 ms)
-    digitalWrite(disparoTRIAC, LOW);   // Apagar pulso
-    cruzoPorCero = false;                  // Resetear flag de cruce por cero
+void controlTriac(float humedad) {
+  if (humedad >= humedadLimiteInferior && humedad <= humedadLimiteSuperior) {
+    digitalWrite(disparoTRIAC, HIGH);  // Mantener estado alto
+  } else {
+    digitalWrite(disparoTRIAC, LOW);   // Apagar
   }
 }
 
 void controlMotor(int parametro) {
-  if (parametro < temperaturaLimiteInferior) {
+  if (parametro <= temperaturaLimiteInferior) {
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
   } 
-  else if (parametro >= temperaturaLimiteInferior && parametro <= temperaturaLimiteSuperior) {
+  else if (parametro > temperaturaLimiteInferior && parametro < temperaturaLimiteSuperior) {
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, LOW);
   } 
@@ -132,17 +114,11 @@ void controlMotor(int parametro) {
 }
 
 void controlLedLuminosidad(int luminosidad) {
-  if (luminosidad >= umbralLuminosidad) {
+  if (luminosidad <= umbralLuminosidad) {
     digitalWrite(LUZ_OUT, HIGH);
   } else {
     digitalWrite(LUZ_OUT, LOW);
   }
-}
-
-void controlLamparaAC(float humedad) {
-  int valorAcoplador = analogRead(acoplador);
-  detectarCrucePorCero(valorAcoplador);
-  dispararPulso(humedad);
 }
 
 void loop() {
@@ -151,7 +127,7 @@ void loop() {
   int luminosidad = leerLuminosidad();
   enviarDatos(temperatura, humedad, luminosidad);
   
-  controlLamparaAC(humedad);
+  controlTriac(humedad);
   controlMotor(temperatura);
   controlLedLuminosidad(luminosidad);
 

@@ -199,6 +199,7 @@ def read_serial():
             line = serial_port.readline().decode("utf-8").strip()
             if line:
                 try:
+                    print(line)
                     temp_value, humidity_value, light_value = map(int, line.split(","))
 
                     # Actualizar medidores
