@@ -18,27 +18,33 @@
 #define LUZPIN 35
 
 // Pines para el control del TRIAC
-const int acoplador = 36;  
+const int acoplador = 32;  
 const int disparoTRIAC = 16;
 
 // Pines para el control del motor
 const int IN1 = 12;                 // Pin de salida digital A
 const int IN2 = 13;                 // Pin de salida digital B
 
+const int LUZ_OUT = 33;  // New pin for luminosity output
 
 // Variables globales
 
 
 // Variables del control del TRIAC
 const int umbralCero = 10;           // Umbral para detección de cruce por cero
-const int tiempoEntreCeros = 20;     // Tiempo conocido entre cruces por cero (ms)
-int retrasoPulso = 5;                // Retraso desde el cruce por cero hasta el pulso (ms)
 bool cruzoPorCero = false;           // Flag para detectar cruce por cero
-unsigned long tiempoUltimoCero = 0;  // Tiempo del último cruce por cero
 
-// Variables del control del motor
-const int limiteInferior = 10;       // Límite inferior del rango medio
-const int limiteSuperior = 20;       // Límite superior del rango medio
+// Variables del control del motor mediante temperatura
+const int temperaturaLimiteInferior = 18;       // Límite inferior del rango medio
+const int temperaturaLimiteSuperior = 25;       // Límite superior del rango medio
+
+// Variables del control del LED de luminosidad
+const int umbralLuminosidad = 80;  // Umbral para encender el LED de luminosidad
+
+// Variables del control de la lampara AC mediante humedad
+const int humedadLimiteInferior = 60;       // Límite inferior del rango medio
+const int humedadLimiteSuperior = 80;       // Límite superior del rango medio
+
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -58,6 +64,8 @@ void setup() {
   // Inicialización del control del motor
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
+
+  pinMode(LUZ_OUT, OUTPUT);
 }
 
 float leerHumedad() {
@@ -76,7 +84,7 @@ float leerTemperatura() {
 
 int leerLuminosidad() {
   int valorLuz = analogRead(LUZPIN);
-  float voltajeLuz = valorLuz * (3.3 / 1023.0);
+  float voltajeLuz = valorLuz * (3.3 / ADC_MAX);
   return voltajeLuz * 30.303;  // Map 0-3.3V to 0-100%
 }
 
@@ -96,12 +104,11 @@ void enviarDatos(float temperatura, float humedad, int luminosidad) {
 void detectarCrucePorCero(int valorAnalogico) {
   if (!cruzoPorCero && valorAnalogico <= umbralCero) {
     cruzoPorCero = true;
-    tiempoUltimoCero = millis();
   }
 }
 
-void dispararPulso() {
-  if (cruzoPorCero && (millis() - tiempoUltimoCero >= retrasoPulso)) {
+void dispararPulso(float humedad) {
+  if (cruzoPorCero && (humedad >= humedadLimiteInferior && humedad <= humedadLimiteSuperior)) {
     digitalWrite(disparoTRIAC, HIGH);  // Enviar pulso
     delay(1);                              // Duración del pulso (1 ms)
     digitalWrite(disparoTRIAC, LOW);   // Apagar pulso
@@ -109,18 +116,12 @@ void dispararPulso() {
   }
 }
 
-void resetearFlag() {
-  if (millis() - tiempoUltimoCero >= tiempoEntreCeros) {
-    cruzoPorCero = false;
-  }
-}
-
 void controlMotor(int parametro) {
-  if (parametro < limiteInferior) {
+  if (parametro < temperaturaLimiteInferior) {
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
   } 
-  else if (parametro >= limiteInferior && parametro <= limiteSuperior) {
+  else if (parametro >= temperaturaLimiteInferior && parametro <= temperaturaLimiteSuperior) {
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, LOW);
   } 
@@ -130,18 +131,29 @@ void controlMotor(int parametro) {
   }
 }
 
+void controlLedLuminosidad(int luminosidad) {
+  if (luminosidad >= umbralLuminosidad) {
+    digitalWrite(LUZ_OUT, HIGH);
+  } else {
+    digitalWrite(LUZ_OUT, LOW);
+  }
+}
+
+void controlLamparaAC(float humedad) {
+  int valorAcoplador = analogRead(acoplador);
+  detectarCrucePorCero(valorAcoplador);
+  dispararPulso(humedad);
+}
+
 void loop() {
   float humedad = leerHumedad();
   float temperatura = leerTemperatura();
   int luminosidad = leerLuminosidad();
   enviarDatos(temperatura, humedad, luminosidad);
   
-  int valorAcoplador = analogRead(acoplador);
-  detectarCrucePorCero(valorAcoplador);
-  dispararPulso();
-  resetearFlag();
-
+  controlLamparaAC(humedad);
   controlMotor(temperatura);
+  controlLedLuminosidad(luminosidad);
 
   delay(500);
 }
